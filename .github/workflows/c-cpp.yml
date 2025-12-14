@@ -9,7 +9,7 @@ on:
 jobs:
   build:
     runs-on: windows-latest
-    
+
     steps:
     - name: Checkout code
       uses: actions/checkout@v3
@@ -19,23 +19,28 @@ jobs:
     - name: Add MSBuild to PATH
       uses: microsoft/setup-msbuild@v1.1
 
-    - name: Install Windows Driver Kit
+    - name: Install Windows Driver Kit (may take long; ensure matches WindowsTargetPlatformVersion)
       run: |
         choco install windowsdriverkit10 -y
-        
+        # 注意：安装可能需要较长时间或重启，确认安装成功并且包含你指定的 SDK 版本
+
     - name: Setup Visual Studio Environment
+      # 建议固定版本或替换为你信任的动作；确保后续 step 能找到 msbuild / dev tools
       uses: seanmiddleditch/gha-setup-vsdevenv@master
 
     - name: Build Solution
       run: |
         msbuild crosfingerprint.sln /p:Configuration=Release /p:Platform=x64 /m /nr:false /p:WindowsTargetPlatformVersion=10.0.19041.0
-        
+
     - name: Upload Build Artifacts
       uses: actions/upload-artifact@v3
       with:
         name: crosfingerprint-driver
         path: |
-          **/Release/*.dll
+          **/Release/*.sys
+          **/x64/Release/*.sys
           **/Release/*.inf
-          **/x64/Release/*.dll
           **/x64/Release/*.inf
+          **/Release/*.cat
+          **/x64/Release/*.cat
+        if-no-files-found: warn
