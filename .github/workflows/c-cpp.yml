@@ -1,0 +1,41 @@
+name: Build crosfingerprint Driver
+
+on:
+  push:
+    branches: [ master ]
+  pull_request:
+    branches: [ master ]
+
+jobs:
+  build:
+    runs-on: windows-latest
+    
+    steps:
+    - name: Checkout code
+      uses: actions/checkout@v3
+      with:
+        submodules: recursive
+
+    - name: Add MSBuild to PATH
+      uses: microsoft/setup-msbuild@v1.1
+
+    - name: Install Windows Driver Kit
+      run: |
+        choco install windowsdriverkit10 -y
+        
+    - name: Setup Visual Studio Environment
+      uses: seanmiddleditch/gha-setup-vsdevenv@master
+
+    - name: Build Solution
+      run: |
+        msbuild crosfingerprint.sln /p:Configuration=Release /p:Platform=x64 /m /nr:false /p:WindowsTargetPlatformVersion=10.0.19041.0
+        
+    - name: Upload Build Artifacts
+      uses: actions/upload-artifact@v3
+      with:
+        name: crosfingerprint-driver
+        path: |
+          **/Release/*.dll
+          **/Release/*.inf
+          **/x64/Release/*.dll
+          **/x64/Release/*.inf
